@@ -50,18 +50,15 @@ export AWS_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY
 export AWS_DEFAULT_REGION=$S3_REGION
 
 export PGPASSWORD=$POSTGRES_PASSWORD
-POSTGRES_HOST_OPTS="-h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER $POSTGRES_EXTRA_OPTS"
+POSTGRES_HOST_OPTS="-h $POSTGRES_HOST -p $POSTGRES_PORT -d ${POSTGRES_DATABASE} -U $POSTGRES_USER $POSTGRES_EXTRA_OPTS"
 
-echo "Creating dump of ${POSTGRES_DATABASE} database from ${POSTGRES_HOST}..."
+echo "Exporting dialog history from ${POSTGRES_DATABASE} database from ${POSTGRES_HOST}..."
 
-if [ "${POSTGRES_DATABASE}" = "**All**" ]; then
-  pg_dumpall $POSTGRES_HOST_OPTS | gzip > dump.sql.gz
-else
-   pg_dump $POSTGRES_HOST_OPTS $POSTGRES_DATABASE | gzip > dump.sql.gz
-fi
+  psql -U postgres -p 5455 -d dialoganalytics -c "COPY (Select * From vw_export_messages_last_day where id_project = 4) To STDOUT With CSV DELIMITER ',';" > history_dialog_chat_avon_ultimo_dia.csv |  7z a -si -p${7Z_PASSWORD} dialog_chat_history.7z
 
-echo "Uploading dump to $S3_BUCKET"
 
-cat dump.sql.gz | aws $AWS_ARGS s3 cp - s3://$S3_BUCKET/$S3_PREFIX/${POSTGRES_DATABASE}_$(date +"%Y-%m-%dT%H:%M:%SZ").sql.gz || exit 2
+echo "Uploading chat history to $S3_BUCKET"
 
-echo "SQL backup uploaded successfully"
+cat dialog_chat_history.7z | aws $AWS_ARGS s3 cp - s3://$S3_BUCKET/$S3_PREFIX/DIALOG_CHAT_AVON_HISTORY_$(date +"%Y-%m-%dT%H:%M:%SZ").7z || exit 2
+
+echo "Chat history uploaded successfully"
