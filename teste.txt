@@ -1,0 +1,8 @@
+backup.sh
+build_and_push.sh
+Dockerfile
+install.sh
+README.md
+run.sh
+teste.sh
+teste.txt

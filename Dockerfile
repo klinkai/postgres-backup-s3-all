@@ -21,5 +21,9 @@ ENV SCHEDULE **None**
 
 ADD run.sh run.sh
 ADD backup.sh backup.sh
+ADD get_history_last_day.sql get_history_last_day.sql
+ADD get_history_4_fev.sql get_history_4_fev.sql
+ADD get_history_5_fev.sql get_history_5_fev.sql
+
 
 CMD ["sh", "run.sh"]

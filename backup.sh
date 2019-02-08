@@ -48,17 +48,43 @@ fi
 export AWS_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID
 export AWS_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY
 export AWS_DEFAULT_REGION=$S3_REGION
+export ZIP_PASSWORD=$Z7_PASSWORD
 
 export PGPASSWORD=$POSTGRES_PASSWORD
 POSTGRES_HOST_OPTS="-h $POSTGRES_HOST -p $POSTGRES_PORT -d ${POSTGRES_DATABASE} -U $POSTGRES_USER $POSTGRES_EXTRA_OPTS"
 
 echo "Exporting dialog history from ${POSTGRES_DATABASE} database from ${POSTGRES_HOST}..."
 
-  psql -U postgres -p 5455 -d dialoganalytics -c "COPY (Select * From vw_export_messages_last_day where id_project = 4) To STDOUT With CSV DELIMITER ',';" > history_dialog_chat_avon_ultimo_dia.csv |  7z a -si -p${7Z_PASSWORD} dialog_chat_history.7z
+if [ "${RUN_PAST_DAYS}" = "**sim**" ]; then
+      run_psql="psql $POSTGRES_HOST_OPTS -f get_history_4_fev.sql  > chat_dialog_history.csv"
+      eval $run_psql 
+      zip_file="zip dialog_chat_history.zip chat_dialog_history.csv"
+      eval $zip_file 
+      echo "Uploading chat history to $S3_BUCKET"
+      cat dialog_chat_history.zip | aws $AWS_ARGS s3 cp - s3://$S3_BUCKET/$S3_PREFIX/DIALOG_CHAT_AVON_HISTORY_2019-02-04.zip || exit 2
+      echo "Chat history uploaded successfully"
+      run_psql="psql $POSTGRES_HOST_OPTS -f get_history_5_fev.sql  > chat_dialog_history.csv"
+      eval $run_psql 
+      zip_file="zip dialog_chat_history.zip chat_dialog_history.csv"
+      eval $zip_file 
+      echo "Uploading chat history to $S3_BUCKET"
+      cat dialog_chat_history.zip | aws $AWS_ARGS s3 cp - s3://$S3_BUCKET/$S3_PREFIX/DIALOG_CHAT_AVON_HISTORY_2019-02-05.zip || exit 2
+      echo "Chat history uploaded successfully"
+      
+  fi
 
+
+
+run_psql="psql $POSTGRES_HOST_OPTS -f get_history_last_day.sql  > chat_dialog_history.csv"
+
+eval $run_psql 
+
+zip_file="zip dialog_chat_history.zip chat_dialog_history.csv"
+
+eval $zip_file 
 
 echo "Uploading chat history to $S3_BUCKET"
 
-cat dialog_chat_history.7z | aws $AWS_ARGS s3 cp - s3://$S3_BUCKET/$S3_PREFIX/DIALOG_CHAT_AVON_HISTORY_$(date +"%Y-%m-%dT%H:%M:%SZ").7z || exit 2
+cat dialog_chat_history.zip | aws $AWS_ARGS s3 cp - s3://$S3_BUCKET/$S3_PREFIX/DIALOG_CHAT_AVON_HISTORY_$(date --date "-1 days" +"%Y-%m-%d").zip || exit 2
 
 echo "Chat history uploaded successfully"

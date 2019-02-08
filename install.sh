@@ -8,7 +8,7 @@ apk update
 
 # install pg_dump
 apk add postgresql
-apk add p7zip
+apk add zip
 # install s3 tools
 apk add python py2-pip
 pip install awscli

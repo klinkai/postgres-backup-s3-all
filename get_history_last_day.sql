@@ -1,0 +1,1 @@
+COPY (Select * From vw_export_messages_last_day where id_project = 4) To STDOUT With CSV DELIMITER ',';
