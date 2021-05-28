@@ -1,5 +1,4 @@
-FROM alpine:3.10.3
-LABEL maintainer="Johannes Schickling <schickling.j@gmail.com>"
+FROM klinkbr/postgresql-backup-s3-all:postgre
 
 ADD install.sh install.sh
 RUN sh install.sh && rm install.sh
